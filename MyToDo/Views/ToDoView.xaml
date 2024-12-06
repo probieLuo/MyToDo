@@ -7,9 +7,13 @@
     xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
     xmlns:local="clr-namespace:MyToDo.Views"
     xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:cv="clr-namespace:MyToDo.Common.Converters"
     mc:Ignorable="d"
     d:DesignHeight="450"
     d:DesignWidth="800">
+    <UserControl.Resources>
+        <cv:IntToVisibilityConverter x:Key="IntToVisibility" />
+    </UserControl.Resources>
     <md:DialogHost>
         <md:DrawerHost
             IsRightDrawerOpen="{Binding IsRightDrawerOpen}">
@@ -83,7 +87,7 @@
                         Text="筛选："
                         VerticalAlignment="Center" />
                     <ComboBox
-                        SelectedIndex="0">
+                        SelectedIndex="{Binding SelectedIndex}">
                         <ComboBoxItem
                             Content="全部">
 
@@ -106,9 +110,9 @@
                     Margin="10,5" />
                 <StackPanel
                     Grid.Row="1"
-                    VerticalAlignment="Center"
-                    Visibility="{Binding ToDoDtos.Count,Converter={StaticResource }}"
-                    >
+                    VerticalAlignment="Center" 
+                    Visibility="{Binding ToDoDtos.Count,
+                    Converter={StaticResource IntToVisibility}}" >
                     <Image
                         Source="/Images/无数据.png"
                         Width="120"

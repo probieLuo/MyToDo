@@ -50,6 +50,16 @@ namespace MyToDo.ViewModels
             get { return seach; }
             set { seach = value; RaisePropertyChanged(); }
         }
+        private int selectedIndex;
+        /// <summary>
+        /// 下拉框列表选中值
+        /// </summary>
+        public int SelectedIndex
+        {
+            get { return selectedIndex; }
+            set { selectedIndex = value; }
+        }
+
 
         private void Add()
         {
