@@ -140,11 +140,13 @@ namespace MyToDo.ViewModels
         async void GetDataAsync()
         {
             UpdateLoading(true);
-            var todoResult = await service.GetAllAsync(new Shared.Parameter.QueryParameter()
+            int? status = selectedIndex == 0 ? null : selectedIndex == 2 ? 1 : 0;
+            var todoResult = await service.GetAllFilteredAsync(new Shared.Parameter.ToDoParameter()
             {
                 PageIndex = 0,
                 PageSize = 100,
                 Search = Seach,
+                Status = status,
             });
             if (todoResult.Status)
             {

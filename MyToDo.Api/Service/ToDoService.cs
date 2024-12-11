@@ -5,6 +5,7 @@ using MyToDo.Shared.Dtos;
 using MyToDo.Shared.Parameter;
 using System.Reflection.Metadata;
 using MyToDo.Shared.Contact;
+using System.Data.Common;
 
 namespace MyToDo.Api.Service
 {
@@ -62,6 +63,26 @@ namespace MyToDo.Api.Service
                 pageSize: parameter.PageSize,
                    pageIndex: parameter.PageIndex,
                    orderBy: source => source.OrderByDescending(t => t.CreateDate));
+                return new ApiResponse() { Status = true, Result = todos };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse() { Status = false, Message = ex.Message };
+            }
+        }
+
+        public async Task<ApiResponse> GetAllAsync(ToDoParameter parameter)
+        {
+            try
+            {
+                var repository = unitOfWork.GetRepository<ToDo>();
+                //var todos = await repository.GetAllAsync();
+                var todos = await repository.GetPagedListAsync(
+                    predicate: x => string.IsNullOrWhiteSpace(parameter.Search) ? true : x.Title.Contains(parameter.Search)
+                    && parameter.Status == null ? true : x.Status.Equals(parameter.Status),
+                    pageSize: parameter.PageSize,
+                    pageIndex: parameter.PageIndex,
+                    orderBy: source => source.OrderByDescending(t => t.CreateDate));
                 return new ApiResponse() { Status = true, Result = todos };
             }
             catch (Exception ex)
