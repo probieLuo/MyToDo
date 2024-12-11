@@ -12,6 +12,7 @@ namespace MyToDo.ViewModels
 {
     public class ToDoViewModel : NavigationViewModel
     {
+        private readonly IToDoService service;
         public ToDoViewModel(IToDoService service, IContainerProvider containerProvider)
             : base(containerProvider)
         {
@@ -20,8 +21,49 @@ namespace MyToDo.ViewModels
             SelectedCommand = new DelegateCommand<ToDoDto>(Selected);
             DeleteCommand = new DelegateCommand<ToDoDto>(Delete);
             this.service = service;
-
         }
+        private ToDoDto currentDto;
+        public ToDoDto CurrentDto
+        {
+            get { return currentDto; }
+            set { currentDto = value; RaisePropertyChanged(); }
+        }
+        private string search;
+        /// <summary>
+        /// 搜索条件
+        /// </summary>
+        public string Search
+        {
+            get { return search; }
+            set { search = value; RaisePropertyChanged(); }
+        }
+        private int selectedIndex;
+        /// <summary>
+        /// 下拉框列表选中值
+        /// </summary>
+        public int SelectedIndex
+        {
+            get { return selectedIndex; }
+            set { selectedIndex = value; }
+        }
+        private bool isRightDrawerOpen;
+        public bool IsRightDrawerOpen
+        {
+            get { return isRightDrawerOpen; }
+            set { isRightDrawerOpen = value; RaisePropertyChanged(); }
+        }
+        private ObservableCollection<ToDoDto> toDoDtos;
+        public ObservableCollection<ToDoDto> ToDoDtos
+        {
+            get { return toDoDtos; }
+            set { toDoDtos = value; RaisePropertyChanged(); }
+        }
+        public DelegateCommand<string> ExecuteCommand { get; private set; }
+        public DelegateCommand<ToDoDto> SelectedCommand { get; private set; }
+        public DelegateCommand<ToDoDto> DeleteCommand { get; private set; }
+        /// <summary>
+        /// 编辑选中/新增时对象
+        /// </summary>
 
         private void Execute(string obj)
         {
@@ -38,28 +80,6 @@ namespace MyToDo.ViewModels
                     break;
             }
         }
-
-
-
-        private string seach;
-        /// <summary>
-        /// 搜索条件
-        /// </summary>
-        public string Seach
-        {
-            get { return seach; }
-            set { seach = value; RaisePropertyChanged(); }
-        }
-        private int selectedIndex;
-        /// <summary>
-        /// 下拉框列表选中值
-        /// </summary>
-        public int SelectedIndex
-        {
-            get { return selectedIndex; }
-            set { selectedIndex = value; }
-        }
-
 
         private void Add()
         {
@@ -109,34 +129,7 @@ namespace MyToDo.ViewModels
                 UpdateLoading(false);
             }
         }
-        private bool isRightDrawerOpen;
-        public bool IsRightDrawerOpen
-        {
-            get { return isRightDrawerOpen; }
-            set { isRightDrawerOpen = value; RaisePropertyChanged(); }
-        }
 
-        private ToDoDto currentDto;
-        /// <summary>
-        /// 编辑选中/新增时对象
-        /// </summary>
-        public ToDoDto CurrentDto
-        {
-            get { return currentDto; }
-            set { currentDto = value; RaisePropertyChanged(); }
-        }
-
-        public DelegateCommand<string> ExecuteCommand { get; private set; }
-        public DelegateCommand<ToDoDto> SelectedCommand { get; private set; }
-        public DelegateCommand<ToDoDto> DeleteCommand { get; private set; }
-        private ObservableCollection<ToDoDto> toDoDtos;
-        private readonly IToDoService service;
-
-        public ObservableCollection<ToDoDto> ToDoDtos
-        {
-            get { return toDoDtos; }
-            set { toDoDtos = value; RaisePropertyChanged(); }
-        }
         async void GetDataAsync()
         {
             UpdateLoading(true);
@@ -145,15 +138,15 @@ namespace MyToDo.ViewModels
             {
                 PageIndex = 0,
                 PageSize = 100,
-                Search = Seach,
+                Search = Search,
                 Status = status,
             });
             if (todoResult.Status)
             {
-                toDoDtos.Clear();
+                ToDoDtos.Clear();
                 foreach (var item in todoResult.Result.Items)
                 {
-                    toDoDtos.Add(item);
+                    ToDoDtos.Add(item);
                 }
             }
             UpdateLoading(false);

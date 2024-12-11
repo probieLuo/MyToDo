@@ -70,7 +70,7 @@
                     Orientation="Horizontal"
                     Grid.ColumnSpan="2">
                     <TextBox
-                        Text="{Binding Seach,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                        Text="{Binding Search,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                         VerticalAlignment="Center"
                         Width="250"
                         md:HintAssist.Hint="查找待办事项..."
@@ -131,7 +131,6 @@
                         HorizontalAlignment="Center"
                         ItemsSource="{Binding ToDoDtos}">
                         <ItemsControl.ItemsPanel>
-
                             <ItemsPanelTemplate>
                                 <WrapPanel />
                             </ItemsPanelTemplate>

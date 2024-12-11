@@ -78,8 +78,8 @@ namespace MyToDo.Api.Service
                 var repository = unitOfWork.GetRepository<ToDo>();
                 //var todos = await repository.GetAllAsync();
                 var todos = await repository.GetPagedListAsync(
-                    predicate: x => string.IsNullOrWhiteSpace(parameter.Search) ? true : x.Title.Contains(parameter.Search)
-                    && parameter.Status == null ? true : x.Status.Equals(parameter.Status),
+                    predicate: x => (string.IsNullOrWhiteSpace(parameter.Search) ? true : x.Title.Contains(parameter.Search))
+                    && (parameter.Status == null ? true : x.Status.Equals(parameter.Status)),
                     pageSize: parameter.PageSize,
                     pageIndex: parameter.PageIndex,
                     orderBy: source => source.OrderByDescending(t => t.CreateDate));
