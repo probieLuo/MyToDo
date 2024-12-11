@@ -28,7 +28,7 @@
     <materialDesign:DialogHost
         DialogTheme="Inherit"
         x:Name="DialogHost"
-        Identifier="RootDialog"
+        Identifier="Root"
         SnackbarMessageQueue="{Binding ElementName=MainSnackbar, Path=MessageQueue}">
 
         <materialDesign:DrawerHost

@@ -99,7 +99,7 @@
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
-        
+
         <Grid
             Grid.Row="2"
             Margin="0,10">
@@ -126,6 +126,8 @@
                         FontWeight="Bold" />
 
                     <Button
+                        Command="{Binding ExecuteCommand}"
+                        CommandParameter="新增待办"
                         Style="{StaticResource MaterialDesignFloatingActionAccentButton }"
                         Width="30"
                         Height="30"
@@ -184,6 +186,8 @@
                         FontWeight="Bold" />
 
                     <Button
+                        Command="{Binding ExecuteCommand}"
+                        CommandParameter="新增备忘录"
                         Style="{StaticResource MaterialDesignFloatingActionAccentButton }"
                         Width="30"
                         Height="30"

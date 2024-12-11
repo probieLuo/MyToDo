@@ -1,11 +1,10 @@
-﻿using System.Configuration;
-using System.Configuration.Internal;
-using System.Data;
-using System.Windows;
-using MyToDo.Common;
+﻿using MyToDo.Common;
 using MyToDo.Service;
 using MyToDo.ViewModels;
+using MyToDo.ViewModels.Dialogs;
 using MyToDo.Views;
+using MyToDo.Views.Dialogs;
+using System.Windows;
 
 namespace MyToDo
 {
@@ -33,8 +32,13 @@ namespace MyToDo
             containerRegistry.GetContainer()
                 .Register<HttpRestClient>(made: Parameters.Of.Type<string>(serviceKey: "webUrl"));
             containerRegistry.GetContainer().RegisterInstance(@"http://localhost:3000/", serviceKey: "webUrl");
+            
             containerRegistry.Register<IToDoService, ToDoService>();
             containerRegistry.Register<IMemoService, MemoService>();
+            containerRegistry.Register<IDialogHostService, DialogHostService>();
+
+            containerRegistry.RegisterForNavigation<AddToDoView, AddToDoViewModel>();
+            containerRegistry.RegisterForNavigation<AddMemoView, AddMemoViewModel>();
 
             containerRegistry.RegisterForNavigation<IndexView, IndexViewModel>();
             containerRegistry.RegisterForNavigation<ToDoView, ToDoViewModel>();
