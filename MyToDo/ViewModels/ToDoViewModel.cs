@@ -1,4 +1,7 @@
-﻿using MyToDo.Common.Models;
+﻿using MaterialDesignThemes.Wpf;
+using MyToDo.Common;
+using MyToDo.Common.Models;
+using MyToDo.Extensions;
 using MyToDo.Service;
 using MyToDo.Shared.Dtos;
 using System;
@@ -13,6 +16,7 @@ namespace MyToDo.ViewModels
     public class ToDoViewModel : NavigationViewModel
     {
         private readonly IToDoService service;
+        private readonly IDialogHostService dialogHost;
         public ToDoViewModel(IToDoService service, IContainerProvider containerProvider)
             : base(containerProvider)
         {
@@ -20,6 +24,7 @@ namespace MyToDo.ViewModels
             ExecuteCommand = new DelegateCommand<string>(Execute);
             SelectedCommand = new DelegateCommand<ToDoDto>(Selected);
             DeleteCommand = new DelegateCommand<ToDoDto>(Delete);
+            dialogHost = containerProvider.Resolve<IDialogHostService>();
             this.service = service;
         }
         private ToDoDto currentDto;
@@ -112,6 +117,9 @@ namespace MyToDo.ViewModels
         {
             try
             {
+                var dialogResult = await dialogHost.Question("温馨提示", $"确认删除待办事项：{dto.Title}？");
+                if (dialogResult.Result != ButtonResult.OK)
+                    return;
                 UpdateLoading(true);
                 var todoResult = await service.DeleteAsync(dto.Id);
                 if (todoResult.Status)

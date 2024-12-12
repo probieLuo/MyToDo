@@ -32,14 +32,14 @@ namespace MyToDo
             containerRegistry.GetContainer()
                 .Register<HttpRestClient>(made: Parameters.Of.Type<string>(serviceKey: "webUrl"));
             containerRegistry.GetContainer().RegisterInstance(@"http://localhost:3000/", serviceKey: "webUrl");
-            
+
             containerRegistry.Register<IToDoService, ToDoService>();
             containerRegistry.Register<IMemoService, MemoService>();
             containerRegistry.Register<IDialogHostService, DialogHostService>();
 
             containerRegistry.RegisterForNavigation<AddToDoView, AddToDoViewModel>();
             containerRegistry.RegisterForNavigation<AddMemoView, AddMemoViewModel>();
-
+            containerRegistry.RegisterForNavigation<MsgView, MsgViewModel>();
             containerRegistry.RegisterForNavigation<IndexView, IndexViewModel>();
             containerRegistry.RegisterForNavigation<ToDoView, ToDoViewModel>();
             containerRegistry.RegisterForNavigation<MemoView, MemoViewModel>();

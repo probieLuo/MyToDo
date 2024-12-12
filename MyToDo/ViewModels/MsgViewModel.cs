@@ -1,39 +1,39 @@
 ﻿using MaterialDesignThemes.Wpf;
 using MyToDo.Common;
-using MyToDo.Shared.Dtos;
 
-namespace MyToDo.ViewModels.Dialogs
+namespace MyToDo.ViewModels
 {
-    public class AddMemoViewModel : BindableBase, IDialogHostAware
+    public class MsgViewModel : BindableBase, IDialogHostAware
     {
-        public AddMemoViewModel()
+        public MsgViewModel()
         {
             SaveCommand = new DelegateCommand(Save);
             CancelCommand = new DelegateCommand(Cancel);
         }
-        private MemoDto model;
-        /// <summary>
-        /// 新增或编辑的实体
-        /// </summary>
-        public MemoDto Model
+        private string title;
+
+        public string Title
         {
-            get { return model; }
-            set { model = value; RaisePropertyChanged(); }
+            get { return title; }
+            set { title = value; RaisePropertyChanged(); }
         }
-        public string DialogHostName { get; set; }
+        private string content;
+
+        public string Content
+        {
+            get { return content; }
+            set { content = value; RaisePropertyChanged(); }
+        }
+        public string DialogHostName { get; set; } = "Root";
         public DelegateCommand SaveCommand { get; set; }
         public DelegateCommand CancelCommand { get; set; }
 
         public void OnDialogOpened(IDialogParameters parameters)
         {
-            if (parameters.ContainsKey("Value"))
-            {
-                Model = parameters.GetValue<MemoDto>("Value");
-            }
-            else
-            {
-                Model = new MemoDto();
-            }
+            if (parameters.ContainsKey("Title"))
+                Title = parameters.GetValue<string>("Title");
+            if (parameters.ContainsKey("Content"))
+                Content = parameters.GetValue<string>("Content");
         }
         private void Cancel()
         {
@@ -45,13 +45,9 @@ namespace MyToDo.ViewModels.Dialogs
 
         private void Save()
         {
-            if (string.IsNullOrWhiteSpace(Model.Title) ||
-               string.IsNullOrWhiteSpace(Model.Content))
-                return;
             if (DialogHost.IsDialogOpen(DialogHostName))
             {
                 DialogParameters param = new DialogParameters();
-                param.Add("Value", Model);
                 DialogHost.Close(DialogHostName, new DialogResult(ButtonResult.OK) { Parameters = param });
             }
         }

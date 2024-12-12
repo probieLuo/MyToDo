@@ -1,21 +1,26 @@
-﻿using MaterialDesignThemes.Wpf;
-using MyToDo.Common;
+﻿using MyToDo.Common;
 using MyToDo.Common.Models;
+using MyToDo.Service;
 using MyToDo.Shared.Dtos;
 using System.Collections.ObjectModel;
 
 namespace MyToDo.ViewModels
 {
-    public class IndexViewModel : BindableBase
+    public class IndexViewModel : NavigationViewModel
     {
-        public IndexViewModel(IDialogHostService dialogService)
+        private readonly IToDoService todoService;
+        private readonly IMemoService memoService;
+        private readonly IDialogHostService dialogService;
+        public IndexViewModel(IDialogHostService dialogService, IContainerProvider provider)
+            : base(provider)
         {
-            TaskBars = new ObservableCollection<TaskBar>();
             ToDoDtos = new ObservableCollection<ToDoDto>();
             MemoDtos = new ObservableCollection<MemoDto>();
             MessageInfo = "你好，probie! 今天是 " + DateTime.Now.ToString("yyyy-MM-dd");
             CreateTaskBars();
             ExecuteCommand = new DelegateCommand<string>(Execute);
+            todoService = provider.Resolve<IToDoService>();
+            memoService = provider.Resolve<MemoService>();
             this.dialogService = dialogService;
         }
 
@@ -44,7 +49,6 @@ namespace MyToDo.ViewModels
         }
 
         private ObservableCollection<MemoDto> memoDtos;
-        private readonly IDialogHostService dialogService;
 
         public ObservableCollection<MemoDto> MemoDtos
         {
@@ -69,16 +73,49 @@ namespace MyToDo.ViewModels
                     break;
             }
         }
-        void AddToDo()
+        async void AddToDo()
         {
-            dialogService.ShowDialog("AddToDoView", null);
+            var dialogResult = await dialogService.ShowDialog("AddToDoView", null);
+            if (dialogResult.Result == ButtonResult.OK)
+            {
+                ToDoDto toDoDto = dialogResult.Parameters.GetValue<ToDoDto>("Value");
+                if (toDoDto.Id > 0)
+                {
+
+                }
+                else
+                {
+                    var addResult = await todoService.AddAsync(toDoDto);
+                    if (addResult.Status)
+                    {
+                        ToDoDtos.Add(addResult.Result);
+                    }
+                }
+            }
         }
-        void AddMemo()
+        async void AddMemo()
         {
-            dialogService.ShowDialog("AddMemoView", null);
+            var dialogResult = await dialogService.ShowDialog("AddMemoView", null);
+            if (dialogResult.Result == ButtonResult.OK)
+            {
+                MemoDto memoDto = dialogResult.Parameters.GetValue<MemoDto>("Value");
+                if (memoDto.Id > 0)
+                {
+
+                }
+                else
+                {
+                    var addResult = await memoService.AddAsync(memoDto);
+                    if (addResult.Status)
+                    {
+                        MemoDtos.Add(addResult.Result);
+                    }
+                }
+            }
         }
         void CreateTaskBars()
         {
+            TaskBars = new ObservableCollection<TaskBar>();
             TaskBars.Add(new TaskBar() { Icon = "ClockFast", Title = "汇总", Content = "9", Color = "#FF0CA0FF", Target = "" });
             TaskBars.Add(new TaskBar() { Icon = "ClockCheckOutline", Title = "已完成", Content = "9", Color = "#FF1ECA3A", Target = "" });
             TaskBars.Add(new TaskBar() { Icon = "ChartLineVariant", Title = "已完成比例", Content = "100%", Color = "#FF02C6DC", Target = "" });
