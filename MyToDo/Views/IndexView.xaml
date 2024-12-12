@@ -6,9 +6,15 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:MyToDo.Views"
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
     mc:Ignorable="d"
+    xmlns:cv="clr-namespace:MyToDo.Common.Converters"
     d:DesignHeight="450"
     d:DesignWidth="800">
+    <UserControl.Resources>
+        <cv:IntToBoolConverter
+            x:Key="intToBool" />
+    </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition
@@ -139,16 +145,28 @@
                 </DockPanel>
 
                 <ListBox
+                    x:Name="todoList"
                     ItemsSource="{Binding ToDoDtos}"
                     HorizontalContentAlignment="Stretch"
                     ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger
+                            EventName="MouseDoubleClick">
+                            <i:InvokeCommandAction
+                                Command="{Binding EditToDoCommand}"
+                                CommandParameter="{Binding ElementName=todoList,Path=SelectedItem}" />
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <DockPanel
                                 MaxHeight="80"
                                 LastChildFill="False">
                                 <ToggleButton
-                                    DockPanel.Dock="Right" />
+                                    DockPanel.Dock="Right"
+                                    Command="{Binding DataContext.ToDoCompletedCommand,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ItemsControl}}"
+                                    CommandParameter="{Binding}"
+                                    IsChecked="{Binding Status,Converter={StaticResource intToBool}}" />
                                 <StackPanel>
                                     <TextBlock
                                         FontSize="16"
@@ -199,8 +217,17 @@
                 </DockPanel>
 
                 <ListBox
+                    x:Name="memoList"
                     ItemsSource="{Binding MemoDtos}"
                     ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger
+                            EventName="MouseDoubleClick">
+                            <i:InvokeCommandAction
+                                Command="{Binding EditMemoCommand}"
+                                CommandParameter="{Binding ElementName=memoList,Path=SelectedItem}" />
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel

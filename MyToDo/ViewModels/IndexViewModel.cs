@@ -22,6 +22,9 @@ namespace MyToDo.ViewModels
             todoService = provider.Resolve<IToDoService>();
             memoService = provider.Resolve<MemoService>();
             this.dialogService = dialogService;
+            EditToDoCommand = new DelegateCommand<ToDoDto>(AddToDo);
+            EditMemoCommand = new DelegateCommand<MemoDto>(AddMemo);
+            ToDoCompletedCommand = new DelegateCommand<ToDoDto>(Completed);
         }
 
         #region 属性
@@ -57,6 +60,9 @@ namespace MyToDo.ViewModels
         }
         #endregion
 
+        public DelegateCommand<ToDoDto> ToDoCompletedCommand { get; private set; }
+        public DelegateCommand<ToDoDto> EditToDoCommand { get; private set; }
+        public DelegateCommand<MemoDto> EditMemoCommand { get; private set; }
         public DelegateCommand<string> ExecuteCommand { get; private set; }
 
         private void Execute(string obj)
@@ -64,24 +70,50 @@ namespace MyToDo.ViewModels
             switch (obj)
             {
                 case "新增待办":
-                    AddToDo();
+                    AddToDo(null);
                     break;
                 case "新增备忘录":
-                    AddMemo();
+                    AddMemo(null);
                     break;
                 default:
                     break;
             }
         }
-        async void AddToDo()
+        private async void Completed(ToDoDto dto)
         {
-            var dialogResult = await dialogService.ShowDialog("AddToDoView", null);
+            var updatedResult = await todoService.UpdateAsync(dto);
+            if (updatedResult.Status)
+            {
+                var todo = ToDoDtos.FirstOrDefault(t => t.Id.Equals(dto.Id));
+                if (todo != null)
+                {
+                    ToDoDtos.Remove(todo);
+                }
+            }
+        }
+        async void AddToDo(ToDoDto dto)
+        {
+            DialogParameters parameters = new DialogParameters();
+            if (dto != null)
+            {
+                parameters.Add("Value", dto);
+            }
+            var dialogResult = await dialogService.ShowDialog("AddToDoView", parameters);
             if (dialogResult.Result == ButtonResult.OK)
             {
                 ToDoDto toDoDto = dialogResult.Parameters.GetValue<ToDoDto>("Value");
                 if (toDoDto.Id > 0)
                 {
-
+                    var updateResult = await todoService.UpdateAsync(toDoDto);
+                    if (updateResult.Status)
+                    {
+                        var todoModel = ToDoDtos.FirstOrDefault(x => x.Id.Equals(toDoDto.Id));
+                        if (todoModel != null)
+                        {
+                            todoModel.Title = toDoDto.Title;
+                            todoModel.Content = toDoDto.Content;
+                        }
+                    }
                 }
                 else
                 {
@@ -93,15 +125,29 @@ namespace MyToDo.ViewModels
                 }
             }
         }
-        async void AddMemo()
+        async void AddMemo(MemoDto dto)
         {
-            var dialogResult = await dialogService.ShowDialog("AddMemoView", null);
+            DialogParameters parameters = new DialogParameters();
+            if (dto != null)
+            {
+                parameters.Add("Value", dto);
+            }
+            var dialogResult = await dialogService.ShowDialog("AddMemoView", parameters);
             if (dialogResult.Result == ButtonResult.OK)
             {
                 MemoDto memoDto = dialogResult.Parameters.GetValue<MemoDto>("Value");
                 if (memoDto.Id > 0)
                 {
-
+                    var updateResult = await memoService.UpdateAsync(memoDto);
+                    if (updateResult.Status)
+                    {
+                        var memoModel = MemoDtos.FirstOrDefault(x => x.Id.Equals(memoDto.Id));
+                        if (memoModel != null)
+                        {
+                            memoModel.Title = memoDto.Title;
+                            memoModel.Content = memoDto.Content;
+                        }
+                    }
                 }
                 else
                 {
