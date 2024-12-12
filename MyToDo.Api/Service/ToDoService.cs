@@ -6,6 +6,7 @@ using MyToDo.Shared.Parameter;
 using System.Reflection.Metadata;
 using MyToDo.Shared.Contact;
 using System.Data.Common;
+using System.Collections.ObjectModel;
 
 namespace MyToDo.Api.Service
 {
@@ -98,6 +99,36 @@ namespace MyToDo.Api.Service
                 var repository = unitOfWork.GetRepository<ToDo>();
                 var todo = await repository.GetFirstOrDefaultAsync(predicate: x => x.Id.Equals(id));
                 return new ApiResponse() { Status = true, Result = todo };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse() { Status = false, Message = ex.Message };
+            }
+        }
+
+        public async Task<ApiResponse> Summary()
+        {
+            try
+            {
+                var todoRepository = unitOfWork.GetRepository<ToDo>();
+                var todos = await todoRepository.GetAllAsync(orderBy: source =>
+                source.OrderByDescending(t => t.CreateDate));
+
+                var memoRepository = unitOfWork.GetRepository<Memo>();
+                var memos = await memoRepository.GetAllAsync(orderBy: source =>
+                source.OrderByDescending(t => t.CreateDate));
+
+                SummaryDto summary = new SummaryDto();
+
+                summary.ToDoList = new ObservableCollection<ToDoDto>(mapper.Map<List<ToDoDto>>(todos.Where(t => t.Status == 0)));
+                summary.MemoList = new ObservableCollection<MemoDto>(mapper.Map<List<MemoDto>>(memos));
+                summary.Sum = todos.Count();
+                summary.MemoCount = memos.Count();
+                summary.CompletedCount = todos.Where(t => t.Status == 1).Count();
+                summary.CompletedRatio = ((double)summary.CompletedCount / (double)summary.Sum).ToString("0%");
+
+
+                return new ApiResponse() { Status = true, Result = summary };
             }
             catch (Exception ex)
             {

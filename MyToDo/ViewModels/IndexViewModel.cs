@@ -1,8 +1,10 @@
 ﻿using MyToDo.Common;
 using MyToDo.Common.Models;
+using MyToDo.Extensions;
 using MyToDo.Service;
 using MyToDo.Shared.Dtos;
 using System.Collections.ObjectModel;
+using System.Globalization;
 
 namespace MyToDo.ViewModels
 {
@@ -11,20 +13,21 @@ namespace MyToDo.ViewModels
         private readonly IToDoService todoService;
         private readonly IMemoService memoService;
         private readonly IDialogHostService dialogService;
+        private readonly IRegionManager regionManager;
         public IndexViewModel(IDialogHostService dialogService, IContainerProvider provider)
             : base(provider)
         {
-            ToDoDtos = new ObservableCollection<ToDoDto>();
-            MemoDtos = new ObservableCollection<MemoDto>();
             MessageInfo = "你好，probie! 今天是 " + DateTime.Now.ToString("yyyy-MM-dd");
             CreateTaskBars();
             ExecuteCommand = new DelegateCommand<string>(Execute);
-            todoService = provider.Resolve<IToDoService>();
-            memoService = provider.Resolve<MemoService>();
+            this.todoService = provider.Resolve<IToDoService>();
+            this.memoService = provider.Resolve<MemoService>();
+            this.regionManager = provider.Resolve<IRegionManager>();
             this.dialogService = dialogService;
             EditToDoCommand = new DelegateCommand<ToDoDto>(AddToDo);
             EditMemoCommand = new DelegateCommand<MemoDto>(AddMemo);
             ToDoCompletedCommand = new DelegateCommand<ToDoDto>(Completed);
+            NavigateCommand = new DelegateCommand<TaskBar>(Navigate);
         }
 
         #region 属性
@@ -45,18 +48,14 @@ namespace MyToDo.ViewModels
         }
         private ObservableCollection<ToDoDto> toDoDtos;
 
-        public ObservableCollection<ToDoDto> ToDoDtos
-        {
-            get { return toDoDtos; }
-            set { toDoDtos = value; RaisePropertyChanged(); }
-        }
 
-        private ObservableCollection<MemoDto> memoDtos;
 
-        public ObservableCollection<MemoDto> MemoDtos
+        private SummaryDto summary;
+
+        public SummaryDto Summary
         {
-            get { return memoDtos; }
-            set { memoDtos = value; RaisePropertyChanged(); }
+            get { return summary; }
+            set { summary = value; RaisePropertyChanged(); }
         }
         #endregion
 
@@ -64,6 +63,7 @@ namespace MyToDo.ViewModels
         public DelegateCommand<ToDoDto> EditToDoCommand { get; private set; }
         public DelegateCommand<MemoDto> EditMemoCommand { get; private set; }
         public DelegateCommand<string> ExecuteCommand { get; private set; }
+        public DelegateCommand<TaskBar> NavigateCommand { get; private set; }
 
         private void Execute(string obj)
         {
@@ -84,10 +84,13 @@ namespace MyToDo.ViewModels
             var updatedResult = await todoService.UpdateAsync(dto);
             if (updatedResult.Status)
             {
-                var todo = ToDoDtos.FirstOrDefault(t => t.Id.Equals(dto.Id));
+                var todo = summary.ToDoList.FirstOrDefault(t => t.Id.Equals(dto.Id));
                 if (todo != null)
                 {
-                    ToDoDtos.Remove(todo);
+                    summary.ToDoList.Remove(todo);
+                    summary.CompletedCount += 1;
+                    summary.CompletedRatio = (summary.CompletedCount / (double)summary.Sum).ToString("0%");
+                    Refresh();
                 }
             }
         }
@@ -107,7 +110,7 @@ namespace MyToDo.ViewModels
                     var updateResult = await todoService.UpdateAsync(toDoDto);
                     if (updateResult.Status)
                     {
-                        var todoModel = ToDoDtos.FirstOrDefault(x => x.Id.Equals(toDoDto.Id));
+                        var todoModel = summary.ToDoList.FirstOrDefault(x => x.Id.Equals(toDoDto.Id));
                         if (todoModel != null)
                         {
                             todoModel.Title = toDoDto.Title;
@@ -120,7 +123,10 @@ namespace MyToDo.ViewModels
                     var addResult = await todoService.AddAsync(toDoDto);
                     if (addResult.Status)
                     {
-                        ToDoDtos.Add(addResult.Result);
+                        summary.Sum += 1;
+                        summary.ToDoList.Add(addResult.Result);
+                        summary.CompletedRatio = (summary.CompletedCount / (double)summary.Sum).ToString("0%");
+                        Refresh();
                     }
                 }
             }
@@ -141,7 +147,7 @@ namespace MyToDo.ViewModels
                     var updateResult = await memoService.UpdateAsync(memoDto);
                     if (updateResult.Status)
                     {
-                        var memoModel = MemoDtos.FirstOrDefault(x => x.Id.Equals(memoDto.Id));
+                        var memoModel = summary.MemoList.FirstOrDefault(x => x.Id.Equals(memoDto.Id));
                         if (memoModel != null)
                         {
                             memoModel.Title = memoDto.Title;
@@ -154,19 +160,54 @@ namespace MyToDo.ViewModels
                     var addResult = await memoService.AddAsync(memoDto);
                     if (addResult.Status)
                     {
-                        MemoDtos.Add(addResult.Result);
+                        summary.MemoCount += 1;
+                        summary.MemoList.Add(addResult.Result);
+                        Refresh();
                     }
                 }
             }
         }
+
+        async void Navigate(TaskBar bar)
+        {
+            if (string.IsNullOrWhiteSpace(bar.Target))
+                return;
+
+            NavigationParameters param = new NavigationParameters();
+            if (bar.Title == "已完成")
+            {
+                param.Add("Value", 2);
+            }
+
+            regionManager.Regions[PrismManager.MainViewRegionName].RequestNavigate(bar.Target, param);
+        }
         void CreateTaskBars()
         {
             TaskBars = new ObservableCollection<TaskBar>();
-            TaskBars.Add(new TaskBar() { Icon = "ClockFast", Title = "汇总", Content = "9", Color = "#FF0CA0FF", Target = "" });
-            TaskBars.Add(new TaskBar() { Icon = "ClockCheckOutline", Title = "已完成", Content = "9", Color = "#FF1ECA3A", Target = "" });
-            TaskBars.Add(new TaskBar() { Icon = "ChartLineVariant", Title = "已完成比例", Content = "100%", Color = "#FF02C6DC", Target = "" });
-            TaskBars.Add(new TaskBar() { Icon = "PlaylistStar", Title = "备忘录", Content = "19", Color = "#FFFFA000", Target = "" });
+            TaskBars.Add(new TaskBar() { Icon = "ClockFast", Title = "汇总", Color = "#FF0CA0FF", Target = "ToDoView" });
+            TaskBars.Add(new TaskBar() { Icon = "ClockCheckOutline", Title = "已完成", Color = "#FF1ECA3A", Target = "ToDoView" });
+            TaskBars.Add(new TaskBar() { Icon = "ChartLineVariant", Title = "已完成比例", Color = "#FF02C6DC", Target = "" });
+            TaskBars.Add(new TaskBar() { Icon = "PlaylistStar", Title = "备忘录", Color = "#FFFFA000", Target = "MemoView" });
         }
 
+        public override async void OnNavigatedTo(NavigationContext navigationContext)
+        {
+            var summaryResult = await todoService.SummaryAsync();
+            if (summaryResult.Status)
+            {
+                Summary = summaryResult.Result;
+                Refresh();
+            }
+
+            base.OnNavigatedFrom(navigationContext);
+        }
+
+        void Refresh()
+        {
+            TaskBars[0].Content = summary.Sum.ToString();
+            TaskBars[1].Content = summary.CompletedCount.ToString();
+            TaskBars[2].Content = summary.CompletedRatio;
+            TaskBars[3].Content = summary.MemoCount.ToString();
+        }
     }
 }
